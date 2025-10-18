@@ -19,7 +19,7 @@ class ScheduleRuntime(QObject):
         self.app_central = app_central
         # self.schedule_path = Path(schedule_path)
         self.schedule: Optional[ScheduleData] = None
-        self.services = ScheduleServices()
+        self.services = ScheduleServices(app_central)
         self.current_time = datetime.now()
         self.current_offset_time = datetime.now()
 
