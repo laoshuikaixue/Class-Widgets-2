@@ -408,6 +408,24 @@ class ScheduleEditor(QObject):
             self.schedule.subjects.append(subj)
         self.updated.emit()
 
+    @Slot(int, result=bool)
+    def setMaxWeekCycle(self, max_weeks: int):
+        """设置最大周数"""
+        if not self.schedule or not self.schedule.meta:
+            logger.warning("No schedule or meta data available.")
+            return False
+
+        self.schedule.meta.maxWeeks = max_weeks
+        self.updated.emit()
+        return True
+
+    @Slot(result=int)
+    def getMaxWeekCycle(self) -> int:
+        """获取最大周数"""
+        if not self.schedule or not self.schedule.meta:
+            return 1
+        return getattr(self.schedule.meta, "maxWeekCycle", 1)
+
     # 数据访问
     @Property("QVariant", notify=updated)
     def meta(self) -> Dict:
