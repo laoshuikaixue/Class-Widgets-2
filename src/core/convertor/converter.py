@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import yaml
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 from typing import Union
 
 from PySide6.QtCore import QLocale
@@ -119,11 +119,25 @@ class ScheduleConverter:
                 raise ValueError(f"CW2 schema version not supported: {self.data['meta'].get('version')}")
 
     @staticmethod
-    def _format_time(time_str: str) -> str:
+    def _to_cses_time(time_str: str) -> str:
         """统一时间为字符串，避免 YAML 解析问题"""
         if not time_str:
-            return ""
+            raise ValueError(f'Get error type of time: {type(time_str)}; value: {time_str}')
+
         return str(time_str + ":00")
+
+    @staticmethod
+    def _to_cw_time(time: Union[str, int]) -> str:
+        """统一时间为字符串，避免 YAML 解析问题"""
+        # parse
+        if isinstance(time, str):
+            dt_time = datetime.strptime(str(time), '%H:%M:%S')
+        elif isinstance(time, int):
+            dt_time = datetime.strptime(f'{int(time / 60 / 60)}:{int(time / 60 % 60)}:{time % 60}', '%H:%M:%S')
+        else:
+            raise ValueError(f'Get error type of time: {type(time)}; value: {time}')
+
+        return dt_time.strftime("%H:%M")
 
     # CSES → CW2
     def _convert_cses_to_cw2(self) -> ScheduleData:
@@ -162,15 +176,12 @@ class ScheduleConverter:
                     subjects.append(Subject(id=subj_id, name=cls.get("subject") or "Unknown Subject"))
                 entry_id = generate_id("entry")
 
-                start_time = cls.get("start_time")[:5] if cls.get("start_time") else ""
-                end_time = cls.get("end_time")[:5] if cls.get("end_time") else ""
-
                 entries.append(Entry(
                     id=entry_id,
                     type=EntryType.CLASS,
                     subjectId=subj_id,
-                    startTime=start_time,
-                    endTime=end_time,
+                    startTime=self._to_cw_time(cls.get("start_time")),
+                    endTime=self._to_cw_time(cls.get("end_time")),
                 ))
 
             match sch.get("weeks"):
@@ -241,8 +252,8 @@ class ScheduleConverter:
                     )
                     base_classes.append({
                         "subject": subj_name,
-                        "start_time": self._format_time(entry.startTime),
-                        "end_time": self._format_time(entry.endTime),
+                        "start_time": self._to_cses_time(entry.startTime),
+                        "end_time": self._to_cses_time(entry.endTime),
                         "entry_id": entry.id
                     })
 

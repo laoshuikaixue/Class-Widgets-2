@@ -230,7 +230,7 @@ Licensed under the GPL-3 license</source>
         <translation type="vanished">默认</translation>
     </message>
     <message>
-        <location filename="../../src/core/config/model.py" line="134"/>
+        <location filename="../../src/core/config/model.py" line="140"/>
         <source>New Schedule 1</source>
         <translation>新课程表 1</translation>
     </message>
@@ -240,22 +240,22 @@ Licensed under the GPL-3 license</source>
     <message>
         <location filename="../../src/RinUI/windows/CtrlBtn.qml" line="19"/>
         <source>Maximize</source>
-        <translation type="unfinished"></translation>
+        <translation>最大化</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/windows/CtrlBtn.qml" line="19"/>
         <source>Minimize</source>
-        <translation type="unfinished"></translation>
+        <translation>最小化</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/windows/CtrlBtn.qml" line="19"/>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>关闭</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/windows/CtrlBtn.qml" line="19"/>
         <source>Unknown</source>
-        <translation type="unfinished">未知</translation>
+        <translation>未知</translation>
     </message>
 </context>
 <context>
@@ -263,17 +263,17 @@ Licensed under the GPL-3 license</source>
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/DatePicker.qml" line="122"/>
         <source>year</source>
-        <translation type="unfinished"></translation>
+        <translation>年</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/DatePicker.qml" line="123"/>
         <source>month</source>
-        <translation type="unfinished"></translation>
+        <translation>月</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/DatePicker.qml" line="124"/>
         <source>day</source>
-        <translation type="unfinished"></translation>
+        <translation>天</translation>
     </message>
 </context>
 <context>
@@ -918,13 +918,13 @@ You can click the save button in the title bar.</source>
         <translation>活动</translation>
     </message>
     <message>
-        <location filename="../../src/qml/ClassWidgets/components/editor/EntryListView.qml" line="240"/>
+        <location filename="../../src/qml/ClassWidgets/components/editor/EntryListView.qml" line="241"/>
         <location filename="../../src/src/qml/ClassWidgets/components/editor/EntryListView.qml" line="240"/>
         <source>Conflict with existing schedule</source>
         <translation>与现有日程冲突</translation>
     </message>
     <message>
-        <location filename="../../src/qml/ClassWidgets/components/editor/EntryListView.qml" line="242"/>
+        <location filename="../../src/qml/ClassWidgets/components/editor/EntryListView.qml" line="243"/>
         <location filename="../../src/src/qml/ClassWidgets/components/editor/EntryListView.qml" line="242"/>
         <source>This time overlaps with an existing schedule (%1 – %2)</source>
         <translation>该时间段与现有日程 (%1 – %2) 重叠</translation>
@@ -935,25 +935,28 @@ You can click the save button in the title bar.</source>
     <message>
         <location filename="../../src/RinUI/components/Navigation/ErrorPage.qml" line="21"/>
         <source>Sorry, something went wrong!</source>
-        <translation type="unfinished"></translation>
+        <translation>抱歉，出错了！</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/Navigation/ErrorPage.qml" line="30"/>
         <source> load failed! 
 
  Because of </source>
-        <translation type="unfinished"></translation>
+        <translation> 加载失败！ 
+
+由于 </translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/Navigation/ErrorPage.qml" line="30"/>
         <source>
 Please try again later.</source>
-        <translation type="unfinished"></translation>
+        <translation>
+请稍后再试。</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/Navigation/ErrorPage.qml" line="41"/>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation>重试</translation>
     </message>
 </context>
 <context>
@@ -1288,7 +1291,7 @@ Please try again later.</source>
     <message>
         <location filename="../../src/RinUI/components/StatusAndInfo/InfoBar.qml" line="176"/>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>关闭</translation>
     </message>
 </context>
 <context>
@@ -1387,17 +1390,17 @@ Please try again later.</source>
     <message>
         <location filename="../../src/RinUI/components/Navigation/NavigationBar.qml" line="98"/>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>返回</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/Navigation/NavigationBar.qml" line="137"/>
         <source>Open Navigation</source>
-        <translation type="unfinished"></translation>
+        <translation>打开导航</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/Navigation/NavigationBar.qml" line="137"/>
         <source>Close Navigation</source>
-        <translation type="unfinished"></translation>
+        <translation>关闭导航</translation>
     </message>
 </context>
 <context>
@@ -1468,12 +1471,12 @@ Please try again later.</source>
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/PickerView.qml" line="26"/>
         <source>AM</source>
-        <translation type="unfinished"></translation>
+        <translation>上午</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/PickerView.qml" line="26"/>
         <source>PM</source>
-        <translation type="unfinished"></translation>
+        <translation>下午</translation>
     </message>
 </context>
 <context>
@@ -1704,13 +1707,23 @@ It&apos;s incompatible and may cause unexpected issues.</source>
 <context>
     <name>Schedule</name>
     <message>
-        <location filename="../../src/qml/ClassWidgets/pages/editor/Schedule.qml" line="46"/>
+        <location filename="../../src/qml/ClassWidgets/pages/editor/Schedule.qml" line="27"/>
+        <source>Preview</source>
+        <translation>预览</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/editor/Schedule.qml" line="32"/>
+        <source>Edit</source>
+        <translation>编辑</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/editor/Schedule.qml" line="101"/>
         <location filename="../../src/src/qml/ClassWidgets/pages/editor/Schedule.qml" line="46"/>
         <source>Week Cycle</source>
         <translation>多周轮换</translation>
     </message>
     <message>
-        <location filename="../../src/qml/ClassWidgets/pages/editor/Schedule.qml" line="69"/>
+        <location filename="../../src/qml/ClassWidgets/pages/editor/Schedule.qml" line="124"/>
         <location filename="../../src/src/qml/ClassWidgets/pages/editor/Schedule.qml" line="69"/>
         <source>Quick Add Subject</source>
         <translation>快速添加课程</translation>
@@ -1878,7 +1891,7 @@ It&apos;s incompatible and may cause unexpected issues.</source>
 <context>
     <name>ScheduleConverter</name>
     <message>
-        <location filename="../../src/core/convertor/converter.py" line="241"/>
+        <location filename="../../src/core/convertor/converter.py" line="252"/>
         <source>Class</source>
         <translation>课程</translation>
     </message>
@@ -2430,12 +2443,12 @@ If it takes place in another location, such as a sport field, lab, or another cl
     <message>
         <location filename="../../src/RinUI/components/BasicInput/Switch.qml" line="15"/>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation>开</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/BasicInput/Switch.qml" line="16"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>关闭</translation>
     </message>
 </context>
 <context>
@@ -2452,22 +2465,22 @@ If it takes place in another location, such as a sport field, lab, or another cl
     <message>
         <location filename="../../src/RinUI/components/MenusAndToolbars/TextInputMenu.qml" line="13"/>
         <source>Cut</source>
-        <translation type="unfinished"></translation>
+        <translation>剪切</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/MenusAndToolbars/TextInputMenu.qml" line="20"/>
         <source>Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>复制</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/MenusAndToolbars/TextInputMenu.qml" line="27"/>
         <source>Paste</source>
-        <translation type="unfinished"></translation>
+        <translation>粘贴</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/MenusAndToolbars/TextInputMenu.qml" line="34"/>
         <source>Select All</source>
-        <translation type="unfinished"></translation>
+        <translation>全选</translation>
     </message>
 </context>
 <context>
@@ -2512,22 +2525,22 @@ If it takes place in another location, such as a sport field, lab, or another cl
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/TimePicker.qml" line="10"/>
         <source>AM</source>
-        <translation type="unfinished"></translation>
+        <translation>上午</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/TimePicker.qml" line="11"/>
         <source>PM</source>
-        <translation type="unfinished"></translation>
+        <translation>下午</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/TimePicker.qml" line="12"/>
         <source>hour</source>
-        <translation type="unfinished"></translation>
+        <translation>1小时</translation>
     </message>
     <message>
         <location filename="../../src/RinUI/components/DateAndTime/TimePicker.qml" line="13"/>
         <source>minute</source>
-        <translation type="unfinished"></translation>
+        <translation>分钟</translation>
     </message>
 </context>
 <context>
@@ -2535,7 +2548,7 @@ If it takes place in another location, such as a sport field, lab, or another cl
     <message>
         <location filename="../../src/RinUI/windows/TitleBar.qml" line="116"/>
         <source>Fluent TitleBar</source>
-        <translation type="unfinished"></translation>
+        <translation>流线型标题栏</translation>
     </message>
 </context>
 <context>
@@ -2543,7 +2556,7 @@ If it takes place in another location, such as a sport field, lab, or another cl
     <message>
         <location filename="../../src/RinUI/components/StatusAndInfo/Toast.qml" line="156"/>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>关闭</translation>
     </message>
 </context>
 <context>
@@ -2927,8 +2940,7 @@ Go to &quot;Settings&quot; → &quot;Update&quot; for more details.</source>
     <message>
         <location filename="../../src/core/updater/bridge.py" line="168"/>
         <source>Ready to install anytime. Go to &quot;Settings&quot; → &quot;Update&quot; to proceed with installation.</source>
-        <translation>随时可以安装。
-前往“设置”→“更新”以安装。</translation>
+        <translation>随时可以安装。前往“设置”→“更新”以安装。</translation>
     </message>
     <message>
         <location filename="../../src/core/updater/bridge.py" line="205"/>
@@ -2945,13 +2957,13 @@ Go to &quot;Settings&quot; → &quot;Update&quot; for more details.</source>
     <name>WeekSelector</name>
     <message>
         <location filename="../../src/qml/ClassWidgets/components/editor/WeekSelector.qml" line="42"/>
-        <location filename="../../src/src/qml/ClassWidgets/components/editor/WeekSelector.qml" line="42"/>
+        <location filename="../../src/src/qml/ClassWidgets/components/editor/WeekSelector.qml" line="47"/>
         <source>Every Week</source>
         <translation>每周</translation>
     </message>
     <message>
         <location filename="../../src/qml/ClassWidgets/components/editor/WeekSelector.qml" line="47"/>
-        <location filename="../../src/src/qml/ClassWidgets/components/editor/WeekSelector.qml" line="47"/>
+        <location filename="../../src/src/qml/ClassWidgets/components/editor/WeekSelector.qml" line="42"/>
         <source>Round</source>
         <translation>周次循环</translation>
     </message>
@@ -3042,31 +3054,111 @@ then tap &quot;Edit Widget Screen&quot; in the menu to experience it.</source>
         <translation>调整小组件背景的不透明度</translation>
     </message>
     <message>
-        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="125"/>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="122"/>
+        <source>Font</source>
+        <translation>字体</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="123"/>
+        <source>Choose a font for the widgets</source>
+        <translation>为小组件选择用于显示的字体</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="149"/>
+        <source>Font weight</source>
+        <translation>字重</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="150"/>
+        <source>Set the thickness of the font</source>
+        <translation>调整字体粗细</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="155"/>
+        <source>Thin</source>
+        <translation>极细</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="156"/>
+        <source>Extra Light</source>
+        <translation>特细</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="157"/>
+        <source>Light</source>
+        <translation>细体</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="158"/>
+        <source>Regular</source>
+        <translation>常规</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="159"/>
+        <source>Medium</source>
+        <translation>中等</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="160"/>
+        <source>Semi Bold</source>
+        <translation>半粗</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="161"/>
+        <source>Bold</source>
+        <translation>粗体</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="162"/>
+        <source>Extra Bold</source>
+        <translation>特粗</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="163"/>
+        <source>Black</source>
+        <translation>黑体</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="164"/>
+        <source>Custom</source>
+        <translation>自定义</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="195"/>
+        <source>Preview</source>
+        <translation>预览</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="197"/>
+        <source>The quick brown fox jumps over the lazy dog</source>
+        <translation type="unfinished">愿世界和平 &lt;br&gt; The quick brown fox jumps over the lazy dog</translation>
+    </message>
+    <message>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="212"/>
         <location filename="../../src/src/qml/ClassWidgets/pages/settings/General/Widgets.qml" line="125"/>
         <source>Window</source>
         <translation>窗口</translation>
     </message>
     <message>
-        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="131"/>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="218"/>
         <location filename="../../src/src/qml/ClassWidgets/pages/settings/General/Widgets.qml" line="131"/>
         <source>Display</source>
         <translation>显示</translation>
     </message>
     <message>
-        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="132"/>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="219"/>
         <location filename="../../src/src/qml/ClassWidgets/pages/settings/General/Widgets.qml" line="132"/>
         <source>Set which screen to display widgets on, and adjust their position</source>
         <translation>设置小组件显示的屏幕，亦可调整其位置</translation>
     </message>
     <message>
-        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="240"/>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="327"/>
         <location filename="../../src/src/qml/ClassWidgets/pages/settings/General/Widgets.qml" line="240"/>
         <source>X-axis offset</source>
         <translation>X 轴偏移</translation>
     </message>
     <message>
-        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="254"/>
+        <location filename="../../src/qml/ClassWidgets/pages/settings/general/Widgets.qml" line="341"/>
         <location filename="../../src/src/qml/ClassWidgets/pages/settings/General/Widgets.qml" line="254"/>
         <source>Y-axis offset</source>
         <translation>Y 轴偏移</translation>

@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QObject, Property, Signal, Slot, QPoint
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 from RinUI import RinUIWindow
 from loguru import logger
@@ -134,6 +135,7 @@ class AppCentral(QObject):  # Class Widgets 的中枢
 
     @Slot()
     def restart(self):
+        self.cleanup()
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     def setup_qml_context(self, window):
@@ -151,7 +153,19 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         context.setContextProperty("PluginManager", self.plugin_manager)
         context.setContextProperty("AppCentral", self)
         context.setContextProperty("PathManager", self.path_manager)
-        # context.setContextProperty("Translator", self.translator)
+
+    @staticmethod
+    def clean_qml_context(window):
+        """
+        为窗口设置标准的QML上下文属性
+        """
+        context = window.engine.rootContext()
+        context.setContextProperty("WidgetsModel", None)
+        context.setContextProperty("Configs", None)
+        context.setContextProperty("ThemeManager", None)
+        context.setContextProperty("PluginManager", None)
+        context.setContextProperty("AppCentral", None)
+        context.setContextProperty("PathManager", None)
 
     def _load_schedule(self):
         """加载课程表"""
@@ -273,6 +287,20 @@ class AppCentral(QObject):  # Class Widgets 的中枢
             root.raise_()
             current = widgets_loader.property("editMode")
             widgets_loader.setProperty("editMode", not current)
+
+    @Slot(str, str, result=QFont)
+    def getQFont(self, target_font: str, fallback_font: str = "Microsoft YaHei") -> QFont:
+        """
+        构造一个带 fallback 的 QFont 对象。
+
+        :param target_font: 用户选择的主字体
+        :param fallback_font: fallback 字体
+        :return: QFont 对象
+        """
+        f = QFont(target_font)
+        f.setFamilies([target_font, fallback_font])
+        f.setStyleHint(QFont.StyleHint.SansSerif)
+        return f
 
 
 class Settings(RinUIWindow):

@@ -1,6 +1,7 @@
 from enum import Enum
 
-from pydantic import BaseModel, Field, Extra, PrivateAttr
+from PySide6.QtWidgets import QApplication
+from pydantic import BaseModel, Field, Extra, PrivateAttr, field_validator
 from typing import Dict, List, Optional, Any
 from PySide6.QtCore import QLocale, QCoreApplication
 
@@ -98,8 +99,8 @@ class PreferencesConfig(ConfigBaseModel):
     widgets_offset_x: int = 0  # 水平偏移
     widgets_offset_y: int = 24  # 垂直偏移
     widgets_layer: ZOrder = ZOrder.TOP  # 小组件置顶/置底
-    display: Optional[str] = None  # 指定显示器
 
+    display: Optional[str] = None  # 指定显示器
     mini_mode: bool = False  # 迷你
 
     widgets_presets: Dict[str, List[WidgetEntry]] = Field(
@@ -112,9 +113,14 @@ class PreferencesConfig(ConfigBaseModel):
     )
     current_preset: str = "default"
 
+    font: str = Field(default="")  # 字体
+    font_weight: int = 600  # 字重
+
     class Config:
         use_enum_values = True
         extra = Extra.allow
+        validate_assignment = True
+        coerce_numbers_to_str = False
 
 
 class InteractionsConfig(ConfigBaseModel):

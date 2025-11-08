@@ -2,6 +2,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Slot, Property, Signal, QRect, Qt, QTimer
 import RinUI
 from PySide6.QtGui import QRegion, QCursor
+from PySide6.QtWidgets import QApplication
 from loguru import logger
 
 from src.core import QML_PATH

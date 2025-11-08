@@ -8,6 +8,7 @@ if __name__ == "__main__":
     ensure_single_instance()
 
     app = QApplication(sys.argv)
+
     instance = AppCentral()
     instance.run()
 

@@ -1,5 +1,9 @@
+import platform
 from datetime import datetime
 from pathlib import Path
+
+from PySide6.QtGui import QFontDatabase
+from PySide6.QtWidgets import QApplication
 from loguru import logger
 from pydantic import Field, PrivateAttr
 from PySide6.QtCore import QObject, QTimer, Signal, Property, Slot
@@ -53,6 +57,27 @@ class ConfigManager(QObject):
             if isinstance(value, ConfigBaseModel):
                 self._bind_nested_on_change(value)
 
+    def _ensure_defaults(self):
+        """确保在 QApplication 存在时，填充"""
+        # 版本号检查
+        if (self._config.app.version != __version__
+                or self._config.app.channel != __version_type__):
+            logger.warning(f"Config version mismatch: {self._config.app.version} {self._config.app.channel}"
+                           f"!= {__version__} {__version_type__}")
+            self._config.app.version = __version__
+            self._config.app.channel = __version_type__
+
+        # 字体设置
+        app = QApplication.instance()
+        if not app:
+            return
+
+        if not self._config.preferences.font:
+            if platform.system() == "Windows":
+                self._config.preferences.font = "Microsoft YaHei"
+            else:
+                self._config.preferences.font = QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont).family()
+
     def _clean_useless_configs(self):
         """
         清理无用的配置项
@@ -74,14 +99,8 @@ class ConfigManager(QObject):
                 data = self.full_path.read_text(encoding="utf-8")
                 self._config = RootConfig.model_validate_json(data)
 
-                if (self._config.app.version != __version__
-                    or self._config.app.channel != __version_type__):
-                    logger.warning(f"Config version mismatch: {self._config.app.version} {self._config.app.channel}"
-                                   f"!= {__version__} {__version_type__}")
-                    self._config.app.version = __version__
-                    self._config.app.channel = __version_type__
-
                 self._bind_nested_on_change(self._config)
+                self._ensure_defaults()
                 self._clean_useless_configs()
             except Exception as e:
                 logger.warning(f"Load config failed: {e}, use default config")
