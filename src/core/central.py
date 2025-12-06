@@ -89,7 +89,7 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         self._init_tray_icon()  # 初始化托盘图标
         self._run_utils()
         self.initialized.emit()  # 发送信号
-        logger.info(f"Configs loaded.")
+        logger.info(f"Initialization completed.")
 
     def _load_config(self):
         """加载和验证配置"""

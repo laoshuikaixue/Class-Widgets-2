@@ -102,6 +102,8 @@ class ConfigManager(QObject):
                 self._bind_nested_on_change(self._config)
                 self._ensure_defaults()
                 self._clean_useless_configs()
+                title = "{:#^80s}".format(f" Class Widgets {__version__}-{__version_type__} ")
+                logger.info(f"{title} \nloaded config: {self.full_path}")
             except Exception as e:
                 logger.warning(f"Load config failed: {e}, use default config")
         self.save()

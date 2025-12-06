@@ -51,10 +51,10 @@ FluentPage {
         SettingCard {
             Layout.fillWidth: true
             title: qsTr("Get Plugins")
-            description: qsTr("Find and install plugins from the Plugin Plaza")
+            description: qsTr("Find and install plugins from the Extension Plaza")
 
             Hyperlink {
-                text: qsTr("Go to Plugin Plaza")
+                text: qsTr("Go to Extension Plaza")
                 enabled: false
             }
         }

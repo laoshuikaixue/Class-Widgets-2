@@ -132,7 +132,7 @@ class PluginManager(QObject):
             plugin_instance.on_load()
             self._plugins[meta["id"]] = plugin_instance
 
-            logger.info(f"Loaded plugin {meta['name']} ({meta['id']}) v{meta['version']}")
+            logger.success(f"Loaded plugin {meta['name']} ({meta['id']}) v{meta['version']}")
         except Exception as e:
             logger.exception(f"Failed to load plugin {meta['id']}: {e}")
 

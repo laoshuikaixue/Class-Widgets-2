@@ -47,7 +47,7 @@ class Plugin(CW2Plugin):
 
     def register_widgets(self):
         for widget in self.widgets_list:
-            self.api.register_widget(
+            self.api.widgets.register(
                 widget_id=widget["widget_id"],
                 name=widget["name"],
                 qml_path=widget["qml_path"],
@@ -58,7 +58,7 @@ class Plugin(CW2Plugin):
 
     @Slot(result=dict)
     def getDateTime(self):
-        current_time = self.api.get_datetime()
+        current_time = self.api.runtime.current_time
         return {
             "hour": f"{current_time.hour:02d}",
             "minute": f"{current_time.minute:02d}",

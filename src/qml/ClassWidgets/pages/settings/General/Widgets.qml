@@ -198,8 +198,11 @@ FluentPage {
                     text: qsTr(
                         "The quick brown fox jumps over the lazy dog"
                     )
-                    font.family: `${Configs.data.preferences.font}, ${Utils.fontFamily}`
-                    font.weight: Configs.data.preferences.font_weight
+                    font: {
+                        var f = AppCentral.getQFont(Configs.data.preferences.font, Utils.fontFamily)
+                        f.weight = Configs.data.preferences.font_weight || 400
+                        return f
+                    }
                 }
             }
         }

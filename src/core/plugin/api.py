@@ -1,94 +1,188 @@
+from typing import Optional, List, Dict, Union, Any
 from datetime import datetime
-
 from PySide6.QtCore import QObject, Signal, QUrl
-from typing import List, Optional, Union
+from src.core.schedule.model import EntryType
 
 
-class PluginAPI(QObject):
-    """
-    安全的插件 API 层
-    暴露给插件的所有功能都通过这里
-    """
+# -------- 子 API 模块 --------
 
-    # 可以定义插件可监听的全局信号
-    scheduleUpdated = Signal()       # 课表更新
-    themeChanged = Signal(str)       # 主题变化
-    notify = Signal(str, int, str, str)  # icon, level, title, message # 通知被推送
+class WidgetsAPI:
+    def __init__(self, app):
+        self._app = app
 
-    def __init__(self, app_central):
+    def register(self, widget_id: str, name: str, qml_path: Union[str, QUrl],
+                 backend_obj: QObject = None,
+                 settings_qml: Optional[Union[str, QUrl]] = None,
+                 default_settings: Optional[dict] = None):
+        self._app.widgets_model.add_widget(
+            widget_id, name, qml_path, backend_obj, settings_qml, default_settings
+        )
+
+
+class NotifyAPI(QObject):
+    pushed = Signal(str)  # 给插件监听的信号 (轻量)
+
+    def __init__(self, app):
         super().__init__()
-        self._app = app_central
-        self._runtime = app_central.runtime
+        self._app = app
+        app.notification.notify.connect(self.pushed.emit)
 
-        # 转接 AppCentral 的信号
-        self._app.updated.connect(self.scheduleUpdated.emit)
-        self._app.theme_manager.themeChanged.connect(self.themeChanged.emit)
-        self._app.notification.notify.connect(self.notify.emit)
-
-        # self._runtime = self._app.schedule_runtime
-
-    # ================== 对外 API ==================
-
-    ### 控制
-    # 注册小组件
-    def register_widget(
-            self,
-            widget_id: str,
-            name: str,
-            qml_path: Union[str, QUrl],
-            backend_obj: QObject = None,
-            settings_qml: Optional[Union[str, QUrl]] = None,
-            default_settings: Optional[dict] = None
-    ):
-        """通过AppCentral统一注册widget"""
-        self._app.widgets_model.add_widget(widget_id, name, qml_path, backend_obj, settings_qml, default_settings)
-
-    def register_task(self, task_instance):
-        self._app.automation_manager.add_task(task_instance)
-
-    # 发通知
-    def push_notification(self, message: str):
+    def send(self, message: str):
         self._app.notification.push_activity(message)
 
-    ### 获取
-    # 课表
-    def get_schedule(self):
+
+class ScheduleAPI:
+    def __init__(self, app):
+        self._app = app
+
+    def get(self):
         return self._app.schedule
 
-    @property
-    def runtime(self):
-        return self._runtime
-
-    def get_datetime(self) -> datetime:
-        return self._app.runtime.current_time
-
-    # 获取当前主题
-    def get_theme(self) -> Optional[str]:
-        return self._app.theme_manager.current_theme
-
-    # 获取配置
-    def get_config(self) -> Optional[dict]:
-        return self._app.globalConfig
-
-    # 更新课表
-    def reload_schedule(self):
+    def reload(self):
         self._app.reloadSchedule()
 
 
-class CW2Plugin(QObject):
-    """
-    Class Widgets 2 插件基类
-    插件写法推荐继承这个
-    """
-    def __init__(self, plugin_api: PluginAPI):
+class ThemeAPI(QObject):
+    changed = Signal(str)
+
+    def __init__(self, app):
         super().__init__()
-        self.api = plugin_api  # 插件API实例
+        self._app = app
+        app.theme_manager.themeChanged.connect(self.changed.emit)
+
+    def current(self) -> Optional[str]:
+        return self._app.theme_manager.current_theme
+
+
+class RuntimeAPI(QObject):
+    """暴露 ScheduleRuntime 的状态给插件"""
+    updated = Signal()       # 课表/时间更新
+    statusChanged = Signal(str)  # 当前日程状态变化
+    entryChanged = Signal(dict)  # 当前 Entry 更新
+
+    def __init__(self, app):
+        super().__init__()
+        self._runtime = app.runtime
+        self._runtime.updated.connect(self._on_runtime_updated)
+        self._runtime.currentsChanged.connect(lambda t: self.statusChanged.emit(t.value))
+
+    # ------------------- 时间 -------------------
+    @property
+    def current_time(self) -> datetime:
+        return self._runtime.current_time
+
+    @property
+    def current_day_of_week(self) -> int:
+        return self._runtime.current_day_of_week
+
+    @property
+    def current_week(self) -> int:
+        return self._runtime.current_week
+
+    @property
+    def current_week_of_cycle(self) -> int:
+        return self._runtime.current_week_of_cycle
+
+    @property
+    def time_offset(self) -> int:
+        return self._runtime.time_offset
+
+    # ------------------- 日程 -------------------
+    @property
+    def schedule_meta(self) -> Optional[Dict]:
+        if not self._runtime.schedule_meta:
+            return None
+        return self._runtime.schedule_meta.model_dump()
+
+    @property
+    def current_day_entries(self) -> List[Dict]:
+        if not self._runtime.current_day:
+            return []
+        return [e.model_dump() for e in self._runtime.current_day.entries]
+
+    @property
+    def current_entry(self) -> Optional[Dict]:
+        if not self._runtime.current_entry:
+            return None
+        return self._runtime.current_entry.model_dump()
+
+    @property
+    def next_entries(self) -> List[Dict]:
+        if not self._runtime.next_entries:
+            return []
+        return [e.model_dump() for e in self._runtime.next_entries]
+
+    @property
+    def remaining_time(self) -> Dict:
+        if not self._runtime.remaining_time:
+            return {"minute": 0, "second": 0}
+        r = self._runtime.remaining_time
+        return {"minute": r.seconds // 60, "second": r.seconds % 60}
+
+    @property
+    def progress(self) -> float:
+        return self._runtime.get_progress_percent() or 0.0
+
+    @property
+    def current_status(self) -> str:
+        return self._runtime.current_status.value if self._runtime.current_status else EntryType.FREE.value
+
+    @property
+    def current_subject(self) -> Optional[Dict]:
+        if not self._runtime.current_subject:
+            return None
+        return self._runtime.current_subject.model_dump()
+
+    @property
+    def current_title(self) -> Optional[str]:
+        return self._runtime.current_title
+
+    # ------------------- 内部事件 -------------------
+    def _on_runtime_updated(self):
+        self.updated.emit()
+        self.entryChanged.emit(self.current_entry or {})
+
+
+class ConfigAPI:
+    def __init__(self, app):
+        self._app = app
+
+    def get(self) -> dict:
+        return self._app.globalConfig
+
+
+class AutomationAPI:
+    def __init__(self, app):
+        self._app = app
+
+    def register(self, task):
+        self._app.automation_manager.add_task(task)
+
+
+# -------- 主 API --------
+
+class PluginAPI:
+    def __init__(self, app):
+        self.widgets: WidgetsAPI = WidgetsAPI(app)
+        self.notify: NotifyAPI = NotifyAPI(app)
+        self.schedule: ScheduleAPI = ScheduleAPI(app)
+        self.theme: ThemeAPI = ThemeAPI(app)
+        self.runtime: RuntimeAPI = RuntimeAPI(app)
+        self.config: ConfigAPI = ConfigAPI(app)
+        self.automation: AutomationAPI = AutomationAPI(app)
+
+
+from PySide6.QtCore import QObject
+
+class CW2Plugin(QObject):
+    """插件基类（插件必须继承它）"""
+
+    def __init__(self, api: PluginAPI):
+        super().__init__()
+        self.api = api
 
     def on_load(self):
-        """插件加载时调用"""
         pass
 
     def on_unload(self):
-        """插件卸载时调用"""
         pass
-
