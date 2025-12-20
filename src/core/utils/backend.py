@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from PySide6.QtCore import Property, Slot, QObject, Signal
 from PySide6.QtGui import QGuiApplication
 from loguru import logger
@@ -9,23 +7,30 @@ from src.core.utils.auto_startup import autostart_supported, enable_autostart, d
 
 
 class UtilsBackend(QObject):
-    initialized = Signal()
     logsUpdated = Signal()
-    MAX_LOG_LINES = 200  # 最多保留200条日志
+    extraSettingsChanged = Signal()
+    licenseLoaded = Signal()
 
-    def __init__(self):
+    MAX_LOG_LINES = 200
+
+    def __init__(self, app):
         super().__init__()
-        self._license_text = ""
-        self._logs = []  # 内存存储日志
-        self.load_license()
+        self.app = app
+        self._extra_settings: list = []
+        self._license_text: str = ""
+        self._logs: list = []
+        self.app.plugin_api.ui.settingsPageRegistered.connect(lambda: self.extraSettingsChanged.emit())
+
+        # 执行初始化逻辑
+        self._init_logger()
+        self.load_license()  # 启动时立即加载
+
+    def _init_logger(self):
+        """配置 Loguru 钩子"""
         logger.add(self._capture_log, level="DEBUG", enqueue=True)
 
-    @Property("QVariantList", notify=logsUpdated)
-    def logs(self):
-        """暴露给 QML 的日志列表"""
-        return self._logs
-
     def _capture_log(self, message):
+        """Loguru 回调函数"""
         record = message.record
         log_entry = {
             "time": record["time"].strftime("%H:%M:%S"),
@@ -39,13 +44,13 @@ class UtilsBackend(QObject):
 
         self.logsUpdated.emit()
 
-
-    @Property(str, notify=initialized)
-    def licenseText(self):
-        return self._license_text
+    @Property("QVariantList", notify=logsUpdated)
+    def logs(self):
+        return self._logs
 
     @Slot(result=list)
     def clearLogs(self):
+        """清理物理日志文件"""
         try:
             size = 0
             if LOGS_PATH.exists():
@@ -56,11 +61,35 @@ class UtilsBackend(QObject):
                             file.unlink()
                             size += file_size
                         except PermissionError:
-                            logger.debug(f"Failed to delete {file.name} caused by permission error")
+                            logger.debug(f"Permission denied: {file.name}")
             return True, round(size, 2)
         except Exception as e:
-            logger.exception(f"Failed to clear logs caused by {e}")
-            return False, 0
+            logger.exception(f"Failed to clear logs: {e}")
+            return [False, 0]
+
+    # 设置与插件
+    @Property(list, notify=extraSettingsChanged)
+    def extraSettings(self):
+        return self.app.plugin_api.ui.pages
+
+    # 设置功能
+    @Property(str, notify=licenseLoaded)
+    def licenseText(self):
+        return self._license_text
+
+    def load_license(self):
+        try:
+            license_path = ROOT_PATH / "LICENSE"
+            if license_path.exists():
+                with open(license_path, "r", encoding="utf-8") as f:
+                    self._license_text = f.read()
+            else:
+                self._license_text = "License file not found."
+        except Exception as e:
+            logger.error(f"Failed to load license: {e}")
+            self._license_text = "Error loading license."
+        finally:
+            self.licenseLoaded.emit()
 
     @Slot(str, result=bool)
     def copyToClipboard(self, text):
@@ -71,14 +100,6 @@ class UtilsBackend(QObject):
         except Exception as e:
             logger.error(f"Failed to copy to clipboard: {e}")
             return False
-
-    def load_license(self):
-        try:
-            with open(Path(ROOT_PATH / "LICENSE"), "r", encoding="utf-8") as f:
-                license_text = f.read()
-            self._license_text = license_text
-        except Exception as e:
-            logger.error(f"Failed to load license: {e}")
 
     # 自启动
     @Property(bool, constant=True)
@@ -91,6 +112,7 @@ class UtilsBackend(QObject):
             enable_autostart()
         else:
             disable_autostart()
+        return is_autostart_enabled()
 
     @Slot(result=bool)
     def autostartEnabled(self):

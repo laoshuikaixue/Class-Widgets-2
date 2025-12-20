@@ -13,7 +13,7 @@ And it usually called `cwplugin.json`
 
 `version`: The version of the plugin. Like `1.0.0`.
 
-`api_version`: The API version of the plugin. Like `>=1.0.0`, `*`,or `>1.2.345.6`.
+`api_version`: The API version of the plugin. Like `>=1.0.0`, `*`,or `<=1.2.345.6` (Support PEP 440).
 
 `description` (optional): The description of the plugin.
 

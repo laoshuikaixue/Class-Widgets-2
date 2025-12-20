@@ -6,6 +6,16 @@ from src.core.directories import QML_PATH
 from src.core.plugin import CW2Plugin
 
 
+META = {
+    "id": "builtin.classwidgets.widgets",
+    "name": "Built-in Widgets",
+    "author": "Class Widgets Official",
+    "version": "1.0.0",
+    "api_version": "*",
+    "entry": "widgets.py"
+}
+
+
 class Plugin(CW2Plugin):
     def __init__(self, plugin_api):
         super().__init__(plugin_api)

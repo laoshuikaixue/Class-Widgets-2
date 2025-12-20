@@ -13,8 +13,7 @@ FluentPage {
         Layout.fillWidth: true
         title: qsTr("Warning")
         text: qsTr(
-            "The plugin system is still under development and has not been tested. " +
-            "Using plugins may cause significant issues."
+            "The plugin system is still under development. "
         )
         severity: Severity.Warning
     }
@@ -51,11 +50,12 @@ FluentPage {
         SettingCard {
             Layout.fillWidth: true
             title: qsTr("Get Plugins")
-            description: qsTr("Find and install plugins from the Extension Plaza")
+            description: qsTr("Find and install plugins from the Extension Plaza (WEB)")
 
             Hyperlink {
                 text: qsTr("Go to Extension Plaza")
-                enabled: false
+                // enabled: false
+                openUrl: "https://plaza.cw.rinlit.cn"
             }
         }
     }
@@ -75,23 +75,37 @@ FluentPage {
 
             Item { Layout.fillWidth: true }
 
+            Connections {
+                target: PluginManager
+
+                function onPluginImportSucceeded() {
+                    floatLayer.createInfoBar({
+                        title: qsTr("Success"),
+                        text: qsTr("The plugin has been imported successfully."),
+                        severity: Severity.Success,
+                        timeout: 5000,
+                    })
+                }
+
+                function onPluginImportFailed(msg) {
+                    floatLayer.createInfoBar({
+                        title: qsTr("Import Failed"),
+                        text: qsTr("The selected plugin could not be imported.\n") + msg,
+                        severity: Severity.Error,
+                        timeout: 5000,
+                    })
+                }
+            }
+
             Button {
                 icon.name: "ic_fluent_add_20_regular"
                 text: qsTr("Import")
                 onClicked: {
                     if (PluginManager.importPlugin()) {
                         floatLayer.createInfoBar({
-                            title: qsTr("Success"),
-                            text: qsTr("The plugin has been imported successfully."),
-                            severity: Severity.Success,
-                            timeout: 5000,
-                        })
-                    } else {
-                        floatLayer.createInfoBar({
-                            title: qsTr("Import Failed"),
-                            text: qsTr("The selected ZIP file does not contain a valid plugin."),
-                            severity: Severity.Error,
-                            timeout: 5000,
+                            title: qsTr("Importing"),
+                            text: qsTr("Importing the selected plugin. Please wait..."),
+                            severity: Severity.Info
                         })
                     }
                 }
@@ -165,8 +179,8 @@ FluentPage {
                                 name: !source ? "ic_fluent_apps_add_in_20_filled" : ""
                                 source: "icon" in modelData ? modelData.icon : ""
                                 anchors.fill: parent
-                                size: 32
-                                opacity: 0.5
+                                size: "icon" in modelData ? 48 : 32
+                                opacity: "icon" in modelData ? 1 : 0.5
 
                                 layer.enabled: true
                                 layer.effect: OpacityMask {

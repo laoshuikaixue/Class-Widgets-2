@@ -13,6 +13,7 @@ from src.core.config import ConfigManager
 from src.core.directories import PathManager, DEFAULT_THEME, CW_PATH, LOGS_PATH
 from src.core.notification import Notification
 from src.core.plugin.api import PluginAPI
+from src.core.plugin.bridge import PluginBackendBridge
 from src.core.plugin.manager import PluginManager
 from src.core.schedule import ScheduleRuntime, ScheduleManager
 from src.core.schedule.editor import ScheduleEditor
@@ -23,6 +24,7 @@ from src.core.utils import TrayIcon, AppTranslator, UtilsBackend
 from src.core.utils.debugger import DebuggerWindow
 from src.core.widgets import WidgetsWindow, WidgetListModel
 from src.core.automations.manager import AutomationManager
+from src.core.windows import Settings, Editor, Tutorial, WhatsNew
 
 
 class AppCentral(QObject):  # Class Widgets 的中枢
@@ -53,7 +55,7 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         self.plugin_api = PluginAPI(self)
         self.plugin_manager = PluginManager(self.plugin_api, self)
         self.app_translator = AppTranslator(self)
-        self.utils_backend = UtilsBackend()
+        self.utils_backend = UtilsBackend(self)
         self.automation_manager = AutomationManager(self)
         self.updater_bridge = UpdaterBridge(self)
 
@@ -70,6 +72,7 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         """初始化UI组件"""
         self.settings = Settings(self)
         self.editor = Editor(self)
+        self.whatsnew = WhatsNew(self)
         self.widgets_window: WidgetsWindow = WidgetsWindow(self)  # 简化参数传递
 
     def run(self):  # 运行
@@ -85,7 +88,7 @@ class AppCentral(QObject):  # Class Widgets 的中枢
 
         self._setup_logging()  # 设置日志
         self._load_schedule()  # 加载课程表
-        self._load_runtime()  # 加载运行时
+        self._load_runtime()  # 加载运行时(以及插件)
         self._init_tray_icon()  # 初始化托盘图标
         self._run_utils()
         self.initialized.emit()  # 发送信号
@@ -203,6 +206,7 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         self.widgets_window.run()
 
         if "--update-done" in sys.argv:
+            self.openWhatsNew()
             self.updater_bridge.update_complete()
 
     def _load_theme_and_plugins(self):
@@ -261,6 +265,16 @@ class AppCentral(QObject):  # Class Widgets 的中枢
             logger.error("Editor window not initialized correctly.")
 
     @Slot()
+    def openWhatsNew(self):
+        """显示课程表编辑器"""
+        if self.whatsnew and self.whatsnew.root_window:
+            self.whatsnew.root_window.show()
+            self.whatsnew.root_window.raise_()
+            self.whatsnew.root_window.requestActivate()
+        else:
+            logger.error("WhatsNew window not initialized correctly.")
+
+    @Slot()
     def openDebugger(self):
         """显示调试器"""
         if not self.configs.app.debug_mode:
@@ -301,39 +315,3 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         f.setFamilies([target_font, fallback_font])
         f.setStyleHint(QFont.StyleHint.SansSerif)
         return f
-
-
-class Settings(RinUIWindow):
-    def __init__(self, parent: AppCentral):
-        super().__init__()
-        self.central = parent
-
-        self.engine.addImportPath(DEFAULT_THEME)
-        self.central.setup_qml_context(self)
-        self.engine.rootContext().setContextProperty("UtilsBackend", self.central.utils_backend)
-        self.engine.rootContext().setContextProperty("UpdaterBridge", self.central.updater_bridge)
-        self.central.retranslate.connect(self.engine.retranslate)
-
-        self.load(CW_PATH / "windows" / "Settings.qml")
-
-
-class Editor(RinUIWindow):
-    def __init__(self, parent: AppCentral):
-        super().__init__()
-        self.central = parent
-
-        self.central.setup_qml_context(self)
-        self.central.retranslate.connect(self.engine.retranslate)
-
-        self.load(CW_PATH / "windows" / "Editor.qml")
-
-
-class Tutorial(RinUIWindow):
-    def __init__(self, parent: AppCentral):
-        super().__init__()
-        self.central = parent
-
-        self.central.setup_qml_context(self)
-        self.central.retranslate.connect(self.engine.retranslate)
-
-        self.load(CW_PATH / "windows" / "Tutorial.qml")

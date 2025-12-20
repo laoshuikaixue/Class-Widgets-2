@@ -14,5 +14,6 @@ dependencies = [
     "RinUI>=0.1.9",
     "pydantic",
     "loguru",
-    "pyyaml"
+    "pyyaml",
+    "packaging"
 ]

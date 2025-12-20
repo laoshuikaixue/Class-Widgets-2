@@ -1,18 +1,26 @@
-from typing import Optional, List, Dict, Union, Any
+import sys
+from pathlib import Path
+from typing import Optional, List, Dict, Union
 from datetime import datetime
-from PySide6.QtCore import QObject, Signal, QUrl
+from PySide6.QtCore import Signal, QUrl
+from loguru import logger
+
+from src.core.config.model import ConfigBaseModel, PluginsConfig
+from src.core.plugin.bridge import PluginBackendBridge
 from src.core.schedule.model import EntryType
+from PySide6.QtCore import QObject
 
 
-# -------- 子 API 模块 --------
+__version__ = "0.1.0"
+
 
 class WidgetsAPI:
     def __init__(self, app):
         self._app = app
 
-    def register(self, widget_id: str, name: str, qml_path: Union[str, QUrl],
+    def register(self, widget_id: str, name: str, qml_path: Union[str, Path],
                  backend_obj: QObject = None,
-                 settings_qml: Optional[Union[str, QUrl]] = None,
+                 settings_qml: Optional[Union[str, Path]] = None,
                  default_settings: Optional[dict] = None):
         self._app.widgets_model.add_widget(
             widget_id, name, qml_path, backend_obj, settings_qml, default_settings
@@ -20,7 +28,7 @@ class WidgetsAPI:
 
 
 class NotifyAPI(QObject):
-    pushed = Signal(str)  # 给插件监听的信号 (轻量)
+    pushed = Signal(str)  # 给插件监听的信号暂定
 
     def __init__(self, app):
         super().__init__()
@@ -137,7 +145,6 @@ class RuntimeAPI(QObject):
     def current_title(self) -> Optional[str]:
         return self._runtime.current_title
 
-    # ------------------- 内部事件 -------------------
     def _on_runtime_updated(self):
         self.updated.emit()
         self.entryChanged.emit(self.current_entry or {})
@@ -145,10 +152,56 @@ class RuntimeAPI(QObject):
 
 class ConfigAPI:
     def __init__(self, app):
-        self._app = app
+        self.app = app
+        self._cm = app.configs
+        self._plugin_models: Dict[str, ConfigBaseModel] = {}  # 运行时对象
 
-    def get(self) -> dict:
-        return self._app.globalConfig
+    def register_plugin_model(self, plugin_id: str, model: ConfigBaseModel):
+        """
+        注册插件配置 Model
+        """
+        if plugin_id in self._cm.plugins.configs:
+            saved_config = self._cm.plugins.configs[plugin_id]
+            try:
+                # 使用模型解析已保存的配置
+                validated = type(model).model_validate(saved_config)
+                # 更新模型实例
+                for field in model.__fields__:
+                    if hasattr(validated, field):
+                        setattr(model, field, getattr(validated, field))
+            except Exception as e:
+                logger.warning(f"Failed to load saved config for {plugin_id}: {e}")
+                # 如果解析失败，保存当前模型到配置
+                self._cm.plugins.configs[plugin_id] = model.model_dump()
+        else:
+            # 用模型默认值初始化
+            self._cm.plugins.configs[plugin_id] = model.model_dump()
+        self._plugin_models[plugin_id] = model
+        original_on_change = getattr(model, '_on_change', None)
+
+        def _sync_to_config_manager():
+            if original_on_change:
+                try:
+                    original_on_change()
+                except Exception as e:
+                    logger.error(f"Error in original _on_change for {plugin_id}: {e}")
+
+            # 同步到 ConfigManager
+            try:
+                self._cm.plugins.configs[plugin_id] = model.model_dump()
+                self._cm._config._on_change()
+            except Exception as e:
+                logger.error(f"Failed to sync config for {plugin_id}: {e}")
+        model._on_change = _sync_to_config_manager
+        model._on_change()
+
+        logger.debug(f"Plugin: {plugin_id} registered config model: {model}")
+
+    def get_plugin_model(self, plugin_id: str) -> Optional[ConfigBaseModel]:
+        return self._plugin_models.get(plugin_id)
+
+    def save(self):
+        return self._cm.save()
 
 
 class AutomationAPI:
@@ -159,7 +212,53 @@ class AutomationAPI:
         self._app.automation_manager.add_task(task)
 
 
-# -------- 主 API --------
+class UiAPI(QObject):
+    settingsPageRegistered = Signal()
+    def __init__(self):
+        super().__init__()
+        self._registered_pages: list[dict] = []
+
+    @property
+    def pages(self):
+        return self._registered_pages
+
+    def unregister_settings_page(self, plugin, qml_path: Union[str, Path]):
+        qml_path = Path(qml_path)
+        if not qml_path.is_absolute():
+            qml_path = plugin.PATH / qml_path
+        qml_path = qml_path.as_uri()
+
+        for page in self._registered_pages:
+            if page["page"] == str(qml_path):
+                self._registered_pages.remove(page)
+                logger.debug(f"Unregister settings page: {qml_path}")
+        self.settingsPageRegistered.emit()
+
+    def register_settings_page(
+        self,
+        plugin,
+        qml_path: str | Path,
+        title: str | None = None,
+        icon: str | None = None
+    ):
+        """插件提供相对路径，可自定义 title 和 icon"""
+        qml_path = Path(qml_path)
+        if not qml_path.is_absolute():
+            qml_path = plugin.PATH / qml_path
+
+        pid = plugin.meta.get("id")
+        if not pid:
+            raise ValueError("Plugin initialization failed, missing meta.id")
+
+        self._registered_pages.append({
+            "id": pid,
+            "page": qml_path.resolve().as_uri(),
+            "title": title or plugin.meta.get("name", "UNKNOWN"),
+            "icon": icon or plugin.meta.get("icon", "ic_fluent_cube_20_regular")
+        })
+        self.settingsPageRegistered.emit()
+        logger.debug(f"Plugin: {pid} register settings page: {qml_path}")
+
 
 class PluginAPI:
     def __init__(self, app):
@@ -170,19 +269,35 @@ class PluginAPI:
         self.runtime: RuntimeAPI = RuntimeAPI(app)
         self.config: ConfigAPI = ConfigAPI(app)
         self.automation: AutomationAPI = AutomationAPI(app)
+        self.ui: UiAPI = UiAPI()
 
-
-from PySide6.QtCore import QObject
 
 class CW2Plugin(QObject):
-    """插件基类（插件必须继承它）"""
-
     def __init__(self, api: PluginAPI):
         super().__init__()
+        self.PATH = Path()
+        self.meta = {}
+        self.pid = None
         self.api = api
+        self._load_plugin_libs()  # 插件库加载
+
+    def _load_plugin_libs(self):
+        """Automatically adds the plugin's 'lib' subdirectory to sys.path."""
+        # 如果 self.PATH 是空的，我们需要更可靠的方式获取根目录
+        plugin_root = self.PATH if self.PATH.is_absolute() else (
+            Path(__file__).parent.resolve()
+        )
+        lib_dir = plugin_root / 'lib'
+        if lib_dir.is_dir() and str(lib_dir) not in sys.path:
+            sys.path.insert(0, str(lib_dir))
 
     def on_load(self):
-        pass
+        self.pid = self.meta.get("id")
+        if self.pid:
+            PluginBackendBridge.register_backend(self.meta.get("id"), self)
+            logger.debug(self.meta)
+        else:
+            logger.warning(f"Plugin {self.meta.get('name')} missing meta.id")
 
     def on_unload(self):
         pass

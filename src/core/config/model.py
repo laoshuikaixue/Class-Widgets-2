@@ -1,7 +1,6 @@
 from enum import Enum
 
-from PySide6.QtWidgets import QApplication
-from pydantic import BaseModel, Field, Extra, PrivateAttr, field_validator
+from pydantic import BaseModel, Field, Extra, PrivateAttr
 from typing import Dict, List, Optional, Any
 from PySide6.QtCore import QLocale, QCoreApplication
 
@@ -133,6 +132,7 @@ class InteractionsConfig(ConfigBaseModel):
 
 class PluginsConfig(ConfigBaseModel):
     enabled: List[str] = ["builtin.classwidgets.widgets"]
+    configs: Dict[str, Dict] = Field(default_factory=dict)
 
 
 class ScheduleConfig(ConfigBaseModel):

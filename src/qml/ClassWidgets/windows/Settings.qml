@@ -51,6 +51,7 @@ FluentWindow {
             title: qsTr("Plugins"),
             page: PathManager.qml("pages/settings/Plugins.qml"),
             icon: "ic_fluent_apps_add_in_20_regular",
+            subItems: UtilsBackend.extraSettings.length > 0 ? UtilsBackend.extraSettings : null
         },
         {
             title: qsTr("About"),

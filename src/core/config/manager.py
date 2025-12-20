@@ -145,3 +145,38 @@ class ConfigManager(QObject):
 
         self._config._on_change()
         self.configChanged.emit()
+
+    @Slot(str, str, "QVariant")
+    def setPlugin(self, plugin_id: str, key: str, value):
+        """设置插件配置（同时更新运行时模型）"""
+        # 先更新 dict 存储
+        plugin_cfg: dict = self._config.plugins.configs.get(plugin_id)
+        if plugin_cfg is None:
+            plugin_cfg = {}
+            self._config.plugins.configs[plugin_id] = plugin_cfg
+
+        # 更新 dict
+        keys = key.split(".")
+        cfg = plugin_cfg
+        for k in keys[:-1]:
+            if k not in cfg or not isinstance(cfg[k], dict):
+                cfg[k] = {}
+            cfg = cfg[k]
+
+        cfg[keys[-1]] = value
+
+        # 如果存在运行时模型，同步更新
+        if hasattr(self, '_api') and hasattr(self._api, '_plugin_models'):
+            model = self._api._plugin_models.get(plugin_id)
+            if model:
+                try:
+                    # 使用 setattr 设置值，会触发模型的 _on_change
+                    obj = model
+                    for k in keys[:-1]:
+                        obj = getattr(obj, k)
+                    setattr(obj, keys[-1], value)
+                except Exception as e:
+                    logger.error(f"Failed to update runtime model for {plugin_id}: {e}")
+
+        self._config._on_change()
+        self.configChanged.emit()
