@@ -27,9 +27,12 @@ from src.core.timer import UnionUpdateTimer
 from src.core.updater import UpdaterBridge
 from src.core.utils import TrayIcon, AppTranslator, UtilsBackend
 from src.core.utils.debugger import DebuggerWindow
+from src.core.utils.instance_locker import SingleInstanceGuard
 from src.core.widgets import WidgetsWindow, WidgetListModel
 from src.core.automations.manager import AutomationManager
-from src.core.windows import Settings, Editor, Tutorial, WhatsNew
+from src.core.windows import Settings, Editor, Tutorial, WhatsNew, CheckSingleInstanceDialog
+
+
 
 
 class AppCentral(QObject):  # Class Widgets 的中枢
@@ -48,12 +51,23 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         if AppCentral._instance is not None:
             raise RuntimeError("AppCentral is a singleton. Use AppCentral.instance() instead.")
         AppCentral._instance = self
-        
+       
+        self._check_single_instance()
         self._initialize_cores()
         self._initialize_notification()
         self._initialize_schedule_components()
         self._initialize_utils()
         self._initialize_ui_components()
+
+    def _check_single_instance(self):
+        """确保单实例运行"""
+        self.instance_guard = SingleInstanceGuard()
+        if not self.instance_guard.try_acquire():
+            lock_info = self.instance_guard.get_lock_info()
+            logger.error(f"Another instance is already running: {lock_info}")
+            self.multi_instances = True
+            return 
+        self.multi_instances = False
 
     @classmethod
     def instance(cls):
@@ -99,6 +113,8 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         self.editor = Editor(self)
         self.whatsnew = WhatsNew(self)
         self.widgets_window: WidgetsWindow = WidgetsWindow(self)  # 简化参数传递
+        if self.multi_instances:
+            self.single_dialog_window = CheckSingleInstanceDialog(self)
 
         import platform
         # win11 except
@@ -110,6 +126,16 @@ class AppCentral(QObject):  # Class Widgets 的中枢
         self._load_config()  # 加载配置
         self._load_translator()  # 加载翻译
 
+        if self.multi_instances:
+            if not (getattr(sys, "frozen", False) and sys.platform == "darwin"):
+                logger.info("Not running in a frozen macOS app. Skipped single instance check.")
+                self.quit()
+            self.openSingleInstanceDialog()
+        else:
+            self.init()
+
+    @Slot()
+    def init(self):
         # 如果教程未完成，先显示引导窗口
         if not getattr(self.configs.app, "tutorial_completed", False):
             logger.info("Tutorial not completed, showing tutorial window first.")
@@ -305,6 +331,16 @@ class AppCentral(QObject):  # Class Widgets 的中枢
             self.whatsnew.root_window.requestActivate()
         else:
             logger.error("WhatsNew window not initialized correctly.")
+
+    @Slot()
+    def openSingleInstanceDialog(self):
+        """显示多实例提示对话框"""
+        if self.single_dialog_window and self.single_dialog_window.root_window:
+            self.single_dialog_window.root_window.show()
+            self.single_dialog_window.root_window.raise_()
+            self.single_dialog_window.root_window.requestActivate()
+        else:
+            logger.error("Single Instance Dialog not initialized correctly.")
 
     @Slot()
     def openDebugger(self):

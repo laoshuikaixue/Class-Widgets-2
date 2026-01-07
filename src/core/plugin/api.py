@@ -316,12 +316,16 @@ class PluginAPI:
 
 
 class CW2Plugin(QObject):
+    initialized = Signal()
+
     def __init__(self, api: PluginAPI):
         super().__init__()
+
         self.PATH = Path()
         self.meta = {}
         self.pid = None
         self.api = api
+
         self._load_plugin_libs()  # 插件库加载
 
     def _load_plugin_libs(self):
@@ -341,6 +345,7 @@ class CW2Plugin(QObject):
             logger.debug(self.meta)
         else:
             logger.warning(f"Plugin {self.meta.get('name')} missing meta.id")
+        self.initialized.emit()
 
     def on_unload(self):
         pass
