@@ -2,7 +2,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, Extra, PrivateAttr
 from typing import Dict, List, Optional, Any
-from PySide6.QtCore import QLocale, QCoreApplication
+from PySide6.QtCore import QLocale, QCoreApplication, Property
 
 from ..directories import DEFAULT_THEME
 from src import __version__, __version_type__

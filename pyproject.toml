@@ -1,6 +1,10 @@
+[build-system]
+requires = ["hatchling>=1.20.0"]
+build-backend = "hatchling.build"
+
 [project]
 name = "ClassWidgets-2"
-version = "2.0.0.dev20251027"
+dynamic = ["version"]
 description = "Class Widgets 2, The Next Class Schedule."
 authors = [
     {name = "RinLit",email = "lintusup@foxmail.com"}
@@ -16,4 +20,13 @@ dependencies = [
     "loguru",
     "pyyaml",
     "packaging"
+]
+
+[tool.hatch.version]
+path = "src/__init__.py"
+match = "__version__ = '([^']+)'"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src"
 ]

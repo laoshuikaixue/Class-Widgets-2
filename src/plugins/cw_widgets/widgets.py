@@ -66,6 +66,7 @@ class Plugin(CW2Plugin):
         ]
 
     def on_load(self):
+        super().on_load()  # 调用父类的on_load来设置插件上下文
         self.register_widgets()
 
     def register_widgets(self):

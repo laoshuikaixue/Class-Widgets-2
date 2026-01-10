@@ -23,9 +23,6 @@ class NotificationProvider(QObject):
         
         # 自动处理图标：支持 Path 对象和字符串
         if icon is not None and isinstance(icon, Path):
-            # Path 对象转换为 URI 字符串
-            if not icon.is_absolute():
-                icon = icon.absolute()
             self.icon = icon.as_uri()
         else:
             # 字符串直接使用

@@ -7,6 +7,7 @@ import ClassWidgets.Components
 
 
 FluentPage {
+    id: root
     title: qsTr("Plugins")
 
     InfoBar {
@@ -37,6 +38,80 @@ FluentPage {
                 timeout: 5000,
             })
         }
+    }
+
+    function showPluginReplaceDialog(pluginData, callback) {
+        pluginReplaceDialog.pluginName = pluginData.name || ""
+        pluginReplaceDialog.pluginId = pluginData.id || ""
+        pluginReplaceDialog.newVersion = pluginData.version || ""
+        pluginReplaceDialog.existingVersion = pluginData.existing_version || ""
+        pluginReplaceDialog.isUpdate = pluginData.version !== pluginData.existing_version
+        
+        pluginReplaceDialog.open()
+        
+        var acceptHandler = function() {
+            if (callback) callback(true)
+        }
+        var rejectHandler = function() {
+            if (callback) callback(false)
+        }
+        pluginReplaceDialog.accepted.connect(acceptHandler)
+        pluginReplaceDialog.rejected.connect(rejectHandler)
+    }
+
+    function importPluginWithConflictCheck() {
+        // 调用后端打开文件对话框并检查冲突
+        var conflicts = PluginManager.importPlugin()
+        
+        if (conflicts.length > 0) {
+            // 有冲突，显示确认对话框
+            var conflict = conflicts[0]  // 暂时只处理第一个冲突
+            showPluginReplaceDialog(conflict, function(confirmed) {
+                if (confirmed) {
+                    // 从冲突信息中获取zip路径
+                    if (conflict.zip_path) {
+                        performImport(conflict.zip_path)
+                    }
+                }
+            })
+        }
+        // 如果没有冲突，后端已经在importPlugin中处理了导入
+    }
+
+    function proceedWithImport(zip_path) {
+        if (!zip_path) {
+            return
+        }
+
+        // 检查插件冲突
+        var conflicts = PluginManager.checkPluginConflicts(zip_path)
+        
+        if (conflicts.length > 0) {
+            // 有冲突，显示确认对话框
+            var conflict = conflicts[0]  // 暂时只处理第一个冲突
+            showPluginReplaceDialog(conflict, function(confirmed) {
+                if (confirmed) {
+                    performImport(zip_path)
+                }
+            })
+        } else {
+            // 没有冲突，直接导入
+            performImport(zip_path)
+        }
+    }
+
+    function performImport(zip_path) {
+        if (PluginManager.importPluginWithPath(zip_path)) {
+            floatLayer.createInfoBar({
+                title: qsTr("Importing"),
+                text: qsTr("Importing the selected plugin. Please wait..."),
+                severity: Severity.Info
+            })
+        }
+    }
+
+    PluginReplaceConfirmDialog {
+        id: pluginReplaceDialog
     }
 
     ColumnLayout {
@@ -101,13 +176,7 @@ FluentPage {
                 icon.name: "ic_fluent_add_20_regular"
                 text: qsTr("Import")
                 onClicked: {
-                    if (PluginManager.importPlugin()) {
-                        floatLayer.createInfoBar({
-                            title: qsTr("Importing"),
-                            text: qsTr("Importing the selected plugin. Please wait..."),
-                            severity: Severity.Info
-                        })
-                    }
+                    importPluginWithConflictCheck()
                 }
             }
         }
@@ -245,9 +314,9 @@ FluentPage {
                                 Flyout {
                                     id: compatibilityFlyout
                                     text: qsTr(
-                                        "This plugin requires API version %1, but current app version is %2. \n" +
+                                        "This plugin requires API version %1, but current API version is %2. \n" +
                                         "It's incompatible and may cause unexpected issues."
-                                    ).arg(modelData.api_version).arg(Configs.data.app.version)
+                                    ).arg(modelData.api_version).arg(PluginManager.getAPIVersion())
                                 }
 
                             }
