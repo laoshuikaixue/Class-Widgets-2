@@ -8,7 +8,7 @@
 
 [![星标](https://img.shields.io/github/stars/rinlit-233-shiroko/class-widgets-2?style=for-the-badge&color=orange&label=%E6%98%9F%E6%A0%87)](https://github.com/rinlit-233-shiroko/class-widgets-2)
 [![当前测试版](https://img.shields.io/github/v/tag/rinlit-233-shiroko/class-widgets-2?include_prereleases&label=%E5%BD%93%E5%89%8D%E6%B5%8B%E8%AF%95%E7%89%88&color=yellow&style=for-the-badge)](https://github.com/rinlit-233-shiroko/class-widgets-2/releases)
-[![开源许可](https://img.shields.io/badge/license-GPLv3-blue.svg?label=%E5%BC%80%E6%BA%90%E8%AE%B8%E5%8F%AF%E8%AF%81&style=for-the-badge)](https://github.com/rinlit-233-shiroko/class-widgets-2?tab=GPL-3.0-1-ov-file)
+[![开源许可](https://img.shields.io/github/license/RinLit-233-shiroko/Class-Widgets-2?label=%E5%BC%80%E6%BA%90%E8%AE%B8%E5%8F%AF%E8%AF%81&style=for-the-badge)](https://github.com/rinlit-233-shiroko/class-widgets-2)
 [![下载量](https://img.shields.io/github/downloads/rinlit-233-shiroko/class-widgets-2/total.svg?label=%E4%B8%8B%E8%BD%BD%E9%87%8F&color=green&style=for-the-badge)](https://github.com/rinlit-233-shiroko/class-widgets-2)
 
 <b>简体中文</b> | <a href="/docs/lang/en_US.md">English</a> | <a href="/docs/lang/ja.md">日本語</a>
@@ -23,7 +23,7 @@
 > 网盘中的文件会自动随版本发行而更新。
 > 
 > <div align="center">
-> <a href="https://github.com/RinLit-233-shiroko/Class-Widgets-2/releases">Release 页面</a> | <a href="https://dl.gemen.pp.ua">OneDrive</a> | <a href="https://www.123865.com/s/DCyBTd-3iWxH">123 网盘</a>
+> <a href="https://github.com/RinLit-233-shiroko/Class-Widgets-2/releases">Release 页面</a> | <a href="https://dl.gemen.pp.ua">OneDrive</a> | <s><a href="https://www.123865.com/s/DCyBTd-3iWxH">123 网盘</a></s>
 > </div>
 
 
@@ -40,8 +40,8 @@ Class Widgets 2 是新一代的电子化课程表展示工具，基于比前代�
 ### 开发文档
 
 欢迎开发者为 Class Widgets 2 开发插件！
-
-- 📚 [完整插件开发指南](docs/dev/plugin/complete_guide.md) - 插件开发概览和导航
+> 当前文档由 AI 生成
+- 📚 [完整插件开发指南](docs/dev/plugin/index.md) - 插件开发概览和导航
 - 🔧 [查看仓库](https://github.com/Class-Widgets/class-widgets-sdk) - Class Widgets SDK
 - 🔧 [查看仓库](https://github.com/Class-Widgets/plugin-template-v2) - Class Widgets 插件模板v2
 

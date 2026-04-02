@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
-from typing import Optional, List, Union
+from typing import Optional
 
 from src.core.schedule.model import Entry, EntryType, Timeline, Subject, ScheduleData, Timetable, WeekType
+from src.core.utils import get_week_number, get_cycle_week
 
 
 class ScheduleServices:
@@ -15,7 +16,8 @@ class ScheduleServices:
         """
         返回当前日期对应的 DayEntry（深拷贝，应用 override，不修改原始数据）
         """
-        current_week = self._get_week_index(schedule, now)  # 当前第几周
+        # 当前是第几周（可为负）
+        raw_week_index = self._get_week_index(schedule, now)
         reschedule_map = self._get_reschedule_map()
 
         # 调休处理：优先使用调休映射表
@@ -26,6 +28,7 @@ class ScheduleServices:
             weekday = now.isoweekday()  # 默认 1-7
 
         max_week_cycle = schedule.meta.maxWeekCycle or 1
+        current_week = get_cycle_week(raw_week_index, max_week_cycle)
 
         for day in schedule.days:
             day_of_week_list = [day.dayOfWeek] if isinstance(day.dayOfWeek, int) else day.dayOfWeek
@@ -40,11 +43,15 @@ class ScheduleServices:
                         for override in schedule.overrides:
                             if override.entryId != entry.id:
                                 continue
-                            if self._override_applies(override, weekday, current_week):
+                            if self._override_applies(override, weekday, current_week, max_week_cycle):
                                 if override.subjectId:
                                     entry.subjectId = override.subjectId
                                 if override.title:
                                     entry.title = override.title
+                                if override.startTime:
+                                    entry.startTime = override.startTime
+                                if override.endTime:
+                                    entry.endTime = override.endTime
 
                     return day_copy
         return None
@@ -73,7 +80,7 @@ class ScheduleServices:
         return None
 
     @staticmethod
-    def get_all_entries(day: Timeline) -> List[Entry]:
+    def get_all_entries(day: Timeline) -> list[Entry]:
         """
         返回当天所有可显示的条目
         """
@@ -84,7 +91,7 @@ class ScheduleServices:
         return sorted(entries, key=lambda e: datetime.strptime(e.startTime, "%H:%M").time())
 
     @staticmethod
-    def get_next_entries(day: Timeline, now: Optional[datetime] = None) -> List[Entry]:
+    def get_next_entries(day: Timeline, now: Optional[datetime] = None) -> list[Entry]:
         now = now or datetime.now()
         now_time = now.time()
         next_entries = [
@@ -111,11 +118,11 @@ class ScheduleServices:
 
     @staticmethod
     def get_current_status(day: Timeline, now: Optional[datetime] = None) -> EntryType:
-        return ScheduleServices.get_current_entry(day, now).type if ScheduleServices.get_current_entry(day, now) else EntryType.FREE
+        current = ScheduleServices.get_current_entry(day, now)
+        return current.type if current else EntryType.FREE
 
     @staticmethod
-    def get_current_subject(day: Timeline, subjects: List[Subject], now: Optional[datetime] = None) -> Optional[
-        Subject]:
+    def get_current_subject(day: Timeline, subjects: list[Subject], now: Optional[datetime] = None) -> Optional[Subject]:
         current = ScheduleServices.get_current_entry(day, now)
         if current and current.subjectId:
             for s in subjects:
@@ -124,7 +131,7 @@ class ScheduleServices:
         return None
 
     @staticmethod
-    def get_subject(subject_id: str, subjects: List[Subject]) -> Optional[Subject]:
+    def get_subject(subject_id: str, subjects: list[Subject]) -> Optional[Subject]:
         if not subject_id and subjects:
             return None
         for s in subjects:
@@ -140,12 +147,10 @@ class ScheduleServices:
         if not schedule.meta or not schedule.meta.startDate:
             return 1  # fallback 默认第1周
 
-        start_date = datetime.fromisoformat(schedule.meta.startDate)
-        delta = (now.date() - start_date.date()).days
-        return delta // 7 + 1
+        return get_week_number(schedule.meta.startDate, now)
 
     @staticmethod
-    def _is_in_week(weeks: Union[str, int, list[int], None], current_week: int, max_week_cycle: int = 1) -> bool:
+    def _is_in_week(weeks: str | int | Optional[list[int]], current_week: int, max_week_cycle: int = 1) -> bool:
         """
         判断某个 weeks 字段是否包含当前周
         - "all" 或 WeekType.ALL → 永远 True

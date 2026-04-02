@@ -212,6 +212,26 @@ FluentPage {
                 }
             }
         }
+
+        SettingCard {
+            Layout.fillWidth: true
+            title: qsTr("Default duration (ms)")
+            description: qsTr("Customize the notification duration (ms)")
+
+            Slider {
+                id: durationSlider
+                from: 1000
+                to: 12000
+                stepSize: 500 //ms
+                // Component.onCompleted: {
+                //     durationSlider.value = Configs.data.notifications.default_duration
+                // }
+                value: Configs.data.notifications.default_duration
+                onValueChanged: {
+                    Configs.set("notifications.default_duration", value)
+                }
+            }
+        }
     }
 
     ColumnLayout {

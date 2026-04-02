@@ -173,5 +173,15 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# Performance Analysis File
+*.pyspy
+
 # VS Code
 .vscode/
+
+# Class Widgets 2
+configs
+plugins
+
+# RinUI
+RinUI

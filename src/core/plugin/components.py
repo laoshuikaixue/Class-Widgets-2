@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Optional, List, Dict, Union
+from typing import Optional, cast
 from datetime import datetime
 from PySide6.QtCore import Signal, QObject
 from loguru import logger
@@ -10,11 +10,26 @@ from src.core.plugin.bridge import PluginBackendBridge
 from src.core.notification import NotificationProvider
 from src.core.schedule.model import EntryType
 
+from src.core.plugin.models import (
+    PluginNotificationPayload,
+    RuntimeMetaPayload,
+    RuntimeEntryPayload,
+    RuntimeEntryChangedPayload,
+    RuntimeSubjectPayload,
+    RuntimeRemainingTimePayload,
+    SettingsPagePayload,
+)
+
+# 用于 type hint 避免循环导入
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.core.plugin.api import PluginAPI
+
 
 class BaseAPI(QObject):
     """所有API类的基类，提供通用的方法和属性"""
-    
-    def __init__(self, plugin_api):
+
+    def __init__(self, plugin_api: "PluginAPI"):
         super().__init__()
         self._plugin_api = plugin_api
     
@@ -27,21 +42,24 @@ class BaseAPI(QObject):
         """获取当前插件"""
         return self._plugin_api.current_plugin
     
-    def _resolve_path(self, path: Union[str, Path]) -> Path:
+    def _resolve_path(self, path: str | Path) -> Path:
         """统一的路径解析方法"""
         path = Path(path)
         if not path.is_absolute():
             plugin = self.current_plugin
-            if plugin:
+            if plugin and plugin.PATH:
                 path = plugin.PATH / path
+            else:
+                # 对于内置插件，使用相对路径
+                logger.debug(f"Built-in plugin path resolution: using relative path {path}")
         return path
 
 
 class WidgetsAPI(BaseAPI):
-    def register(self, widget_id: str, name: str, qml_path: Union[str, Path],
-                 backend_obj: QObject = None,
-                 settings_qml: Optional[Union[str, Path]] = None,
-                 default_settings: Optional[dict] = None):
+    def register(self, widget_id: str, name: str, qml_path: str | Path,
+                 backend_obj: Optional[QObject] = None,
+                 settings_qml: Optional[str | Path] = None,
+                 default_settings: Optional[dict] = None) -> None:
         if not self.current_plugin:
             raise ValueError("No plugin context available. Make sure this method is called within a plugin.")
             
@@ -58,29 +76,15 @@ class WidgetsAPI(BaseAPI):
 
 
 class NotificationAPI(BaseAPI):
-    pushed = Signal(str)  # 给插件监听的信号
+    pushed = Signal(dict)  # 给插件监听的信号
 
-    def __init__(self, plugin_api):
+    def __init__(self, plugin_api: "PluginAPI"):
         super().__init__(plugin_api)
-        self._plugin_api._app.notification.notified.connect(self._on_notification)
-    
-    def _on_notification(self, payload):
-        """处理通知信号并发射给插件"""
-        try:
-            title = payload.get('title', '通知')
-            message = payload.get('message', '')
-            if message:
-                notification_text = f"{title}: {message}"
-            else:
-                notification_text = title
-            self.pushed.emit(notification_text)
-        except Exception as e:
-            logger.error(f"Error processing notification: {e}")
-            self.pushed.emit("通知")
+        self._plugin_api._app.notification.notified.connect(self.pushed)
 
     def get_provider(
             self, provider_id: str, name: str = None,
-            icon: Union[str, Path] = None, use_system_notify: bool = False
+            icon: Optional[str | Path] = None, use_system_notify: bool = False
     ) -> NotificationProvider:
         return self.register_provider(
             provider_id, name, icon, use_system_notify
@@ -88,7 +92,7 @@ class NotificationAPI(BaseAPI):
 
     def register_provider(
             self, provider_id: str, name: str = None,
-            icon: Union[str, Path] = None, use_system_notify: bool = False
+            icon: Optional[str | Path] = None, use_system_notify: bool = False
     ) -> NotificationProvider:
         """
         为插件创建一个 NotificationProvider 实例
@@ -121,10 +125,10 @@ class NotificationAPI(BaseAPI):
 
 class ScheduleAPI(BaseAPI):
     def get(self):
-        return self._app.schedule
+        return self._app.schedule_manager.schedule
 
     def reload(self):
-        self._app.reloadSchedule()
+        return self._app.schedule_manager.reload()
 
 
 class ThemeAPI(BaseAPI):
@@ -132,17 +136,22 @@ class ThemeAPI(BaseAPI):
 
     def __init__(self, plugin_api):
         super().__init__(plugin_api)
-        self._plugin_api._app.theme_manager.themeChanged.connect(self.changed.emit)
+        # 连接主题变更信号，传递主题ID
+        def on_theme_changed():
+            theme_id = self._plugin_api._app.themeManager.currentTheme
+            self.changed.emit(theme_id)
+        
+        self._plugin_api._app.themeManager.themeChanged.connect(on_theme_changed)
 
     def current(self) -> Optional[str]:
-        return self._app.theme_manager.current_theme
+        return self._app.themeManager.current_theme
 
 
 class RuntimeAPI(BaseAPI):
     """暴露 ScheduleRuntime 的状态给插件"""
     updated = Signal()       # 课表/时间更新
     statusChanged = Signal(str)  # 当前日程状态变化
-    entryChanged = Signal(dict)  # 当前 Entry 更新
+    entryChanged = Signal(dict)  # 当前 Entry 更新（RuntimeEntryChangedPayload）
 
     def __init__(self, plugin_api):
         super().__init__(plugin_api)
@@ -173,31 +182,31 @@ class RuntimeAPI(BaseAPI):
 
     # ------------------- 日程 -------------------
     @property
-    def schedule_meta(self) -> Optional[Dict]:
+    def schedule_meta(self) -> Optional[RuntimeMetaPayload]:
         if not self._runtime.schedule_meta:
             return None
-        return self._runtime.schedule_meta.model_dump()
+        return cast(RuntimeMetaPayload, self._runtime.schedule_meta.model_dump())
 
     @property
-    def current_day_entries(self) -> List[Dict]:
+    def current_day_entries(self) -> list[RuntimeEntryPayload]:
         if not self._runtime.current_day:
             return []
-        return [e.model_dump() for e in self._runtime.current_day.entries]
+        return cast(list[RuntimeEntryPayload], [e.model_dump() for e in self._runtime.current_day.entries])
 
     @property
-    def current_entry(self) -> Optional[Dict]:
+    def current_entry(self) -> Optional[RuntimeEntryPayload]:
         if not self._runtime.current_entry:
             return None
-        return self._runtime.current_entry.model_dump()
+        return cast(RuntimeEntryPayload, self._runtime.current_entry.model_dump())
 
     @property
-    def next_entries(self) -> List[Dict]:
+    def next_entries(self) -> list[RuntimeEntryPayload]:
         if not self._runtime.next_entries:
             return []
-        return [e.model_dump() for e in self._runtime.next_entries]
+        return cast(list[RuntimeEntryPayload], [e.model_dump() for e in self._runtime.next_entries])
 
     @property
-    def remaining_time(self) -> Dict:
+    def remaining_time(self) -> RuntimeRemainingTimePayload:
         if not self._runtime.remaining_time:
             return {"minute": 0, "second": 0}
         r = self._runtime.remaining_time
@@ -212,10 +221,10 @@ class RuntimeAPI(BaseAPI):
         return self._runtime.current_status.value if self._runtime.current_status else EntryType.FREE.value
 
     @property
-    def current_subject(self) -> Optional[Dict]:
+    def current_subject(self) -> Optional[RuntimeSubjectPayload]:
         if not self._runtime.current_subject:
             return None
-        return self._runtime.current_subject.model_dump()
+        return cast(RuntimeSubjectPayload, self._runtime.current_subject.model_dump())
 
     @property
     def current_title(self) -> Optional[str]:
@@ -223,14 +232,15 @@ class RuntimeAPI(BaseAPI):
 
     def _on_runtime_updated(self):
         self.updated.emit()
-        self.entryChanged.emit(self.current_entry or {})
+        payload = cast(RuntimeEntryChangedPayload, self.current_entry or {})
+        self.entryChanged.emit(payload)
 
 
 class ConfigAPI(BaseAPI):
     def __init__(self, plugin_api):
         super().__init__(plugin_api)
         self._cm = self._app.configs
-        self._plugin_models: Dict[str, ConfigBaseModel] = {}  # 运行时对象
+        self._plugin_models: dict[str, ConfigBaseModel] = {}  # 运行时对象
 
     def register_plugin_model(self, plugin_id: str, model: ConfigBaseModel):
         """
@@ -290,13 +300,13 @@ class UiAPI(BaseAPI):
     
     def __init__(self, plugin_api):
         super().__init__(plugin_api)
-        self._registered_pages: list[dict] = []
+        self._registered_pages: list[SettingsPagePayload] = []
 
     @property
     def pages(self):
         return self._registered_pages
 
-    def unregister_settings_page(self, qml_path: Union[str, Path]):
+    def unregister_settings_page(self, qml_path: str | Path) -> None:
         # 使用统一的路径解析方法
         qml_path = self._resolve_path(qml_path).as_uri()
 
@@ -309,8 +319,8 @@ class UiAPI(BaseAPI):
     def register_settings_page(
         self,
         qml_path: str | Path,
-        title: str | None = None,
-        icon: str | None = None
+        title: Optional[str] = None,
+        icon: Optional[str] = None
     ):
         """
         插件提供相对路径，可自定义 title 和 icon
@@ -334,7 +344,8 @@ class UiAPI(BaseAPI):
             "id": pid,
             "page": qml_path.resolve().as_uri(),
             "title": title or self.current_plugin.meta.get("name", "UNKNOWN"),
-            "icon": icon or "ic_fluent_cube_20_regular"  # 仅可使用 RinUI 内置图标库的图标
+            "icon": icon or "ic_fluent_cube_20_regular",  # 仅可使用 RinUI 内置图标库的图标
+            "properties": {"pluginId": pid}  # 传递给 PluginPage，用于绑定后端
         })
         self.settingsPageRegistered.emit()
         logger.debug(f"Plugin: {pid} register settings page: {qml_path}")
