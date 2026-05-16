@@ -246,7 +246,7 @@ class ScheduleRuntime(QObject):
             self.all_entries = self.services.get_all_entries(self.current_day)
             self.next_entries = self.services.get_next_entries(self.current_day, self.current_offset_time)
             self.remaining_time = self.services.get_remaining_time(self.current_day, self.current_offset_time)
-            self.current_status = self.services.get_current_status(self.current_day, self.current_offset_time)
+            self.current_status = self.services.get_current_status(self.current_day, self.current_offset_time, self.app_central.configs.schedule.preparation_time)
             self.current_subject = self.services.get_current_subject(self.current_day, self.schedule.subjects,
                                                                      self.current_offset_time)
             self.current_title = getattr(self.current_entry, "title", None)
@@ -426,7 +426,7 @@ class ScheduleRuntime(QObject):
         # Preparation bell notification
         if (
             self.next_entries and len(self.next_entries) > 0 and
-            self.current_status in {EntryType.FREE, EntryType.PREPARATION}
+            self.current_status == EntryType.PREPARATION
         ):
             try:
                 next_entry = self.next_entries[0]
